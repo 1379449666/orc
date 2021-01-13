@@ -42,7 +42,7 @@
       v-model="showList"
       round
       position="bottom"
-      style="height: 90%; padding-top: 4px;"
+      class="_popup"
     />
   </div>
 </template>
@@ -191,5 +191,12 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+._popup{
+  height: 90%;
+  padding-top: 4px;
+  max-width: 450px;
+  right:0;
+  margin:0 auto;
 }
 </style>
