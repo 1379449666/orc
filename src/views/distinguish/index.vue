@@ -12,7 +12,7 @@
     </van-row>
     <div class="_max_width">
       <van-row justify="space-between" type="flex" :style="{opacity:isEdit?0:1}" class="_text_length">
-      <van-col class="text_right" @click="showList=true">违规关键字编辑</van-col>
+      <van-col class="text_right" @click="showList=true;filter_edit({act: 1})">违规关键字编辑</van-col>
       <van-col class="text_right">已输入{{message.length}}/80 个字</van-col>
       </van-row>
       <van-field
@@ -23,13 +23,12 @@
         type="textarea"
         placeholder="请输入广告文案"
         show-word-limit
-        @input="onChang"
         maxlength="80"
         ref="field"
         v-if="!isEdit"
       />
       <div v-else class="result">
-        <span v-for="(item, index) in arrays" :key="index">{{item.text}}</span>
+        <span v-for="(item, index) in arrays" :key="index" :class="item.color">{{item.text}}</span>
       </div>
       <van-row justify="space-between" type="flex" class="_button">
         <van-col><van-button color="#C2C2C2" @click="_onClear">清空</van-button></van-col>
@@ -38,12 +37,37 @@
         <van-col><van-button color="#4BAF00" @click="sub">{{!isEdit ? '提交' : '修改'}}</van-button></van-col>
       </van-row>
     </div>
-    <van-popup
+    <!-- <van-popup
       v-model="showList"
       round
+      closeable
       position="bottom"
       class="_popup"
-    />
+    >
+      dajkdajk
+    </van-popup> -->
+    <van-action-sheet v-model="showList" title="违规关键字" class="_popup">
+      <div v-if="isAdd">
+        <van-contact-card type="add" @click="onAdd" add-text="添加违规关键字"/>
+        <div class="_tags"><van-tag v-for="(item, index) in tagArray" :key="index" size="large" type="primary" @close="close(item)" closeable>{{item}}</van-tag></div>
+      </div>
+      <van-field
+        class="_input addinput"
+        ref="keywords"
+        v-else
+        v-model="keywords"
+        rows="1"
+        autosize
+        label="违规关键字"
+        type="textarea"
+        placeholder="请输入"
+      >
+        <template #button>
+          <van-button size="small" type="primary" style="margin-right:5px" @click="isAdd=true" color="#e3e3e3">取消</van-button>
+          <van-button size="small" type="primary" @click="Addtag">添加</van-button>
+        </template>
+      </van-field>
+    </van-action-sheet>
   </div>
 </template>
 
@@ -52,32 +76,30 @@
 // eslint-disable-next-line no-unused-vars
 import { filter, filter_edit } from '@/api/home.js'
 import { mapGetters } from 'vuex'
+import { Dialog } from 'vant'
 // eslint-disable-next-line no-unused-vars
 import { setClipboardData, getClipboardData } from 'uni-clipboard'
 export default {
   data() {
     return {
       message: '',
+      keywords: '',
       isEdit: false,
       showList: false,
-      arrays: [
-        { text: '这是一段文字', color: '#000' },
-        { text: '这是别的', color: '#fff' },
-        { text: '这是一段文字', color: '#000' },
-        { text: '这是一段文字', color: '#000' }
-      ]
+      arrays: [],
+      tagArray: [],
+      show: true,
+      isAdd: true
     }
   },
   computed: {
     ...mapGetters(['userName'])
   },
   mounted() {
-    console.log(this)
   },
   methods: {
     // 请求数据案例
-    initData() {
-      // 请求接口数据，仅作为展示，需要配置src->config下环境文件
+    initData() { // 请求接口数据，仅作为展示，需要配置src->config下环境文件
       filter({ text: this.message })
         .then(res => {
           this.arrays.length = 0
@@ -89,8 +111,6 @@ export default {
     // doDispatch() {
     //   this.$store.dispatch('setUserName', '真乖，赶紧关注公众号，组织都在等你~')
     // }
-    onChang(e) {
-    },
     _onClear() { // 清空
       this.message = ''
       this.isEdit = false
@@ -101,12 +121,10 @@ export default {
 
     copyCode() { // 复制
       this.$toast('复制成功')
-      console.log('sdada')
     },
 
     copyCodeError() { // 复制失败
       this.$toast('复制失败')
-      console.log('sdad11111a')
     },
     readText(evt) { // 读取剪切板内容
       navigator.clipboard.readText()
@@ -119,10 +137,47 @@ export default {
           this.$toast('读取剪切板内容失败')
         })
     },
-    sub() {
+    sub() { // 提交
       if (this.message.length === 0) return this.$toast('请输入广告文案')
       this.isEdit = !this.isEdit
-      if (this.isEdit) this.initData()
+      if (this.isEdit) {
+        this.initData()
+      } else {
+        setTimeout(() => {
+          this.$refs.field.focus()
+        }, 0)
+      }
+    },
+    onAdd() { // 显示添加关键字
+      this.isAdd = false
+      setTimeout(() => {
+        this.$refs.keywords.focus()
+      }, 0)
+    },
+    close(keywords) { // 点击关闭tag标签
+      Dialog.confirm({
+        title: '确认删除'
+      })
+        .then(() => { this.filter_edit({ act: 3, keywords }) })
+        .catch()
+    },
+    filter_edit(params) {
+      filter_edit(params).then(res => {
+        if (params.act === 2) {
+          this.isAdd = !this.isAdd
+          this.keywords = ''
+        }
+        this.tagArray = []
+        this.tagArray = res.result.list
+      })
+    },
+    Addtag() { // 添加关键字
+      if (this.keywords === '') return this.$toast('请输入违规关键字')
+      var params = {
+        act: 2,
+        keywords: this.keywords
+      }
+      this.filter_edit(params)
     }
   }
 }
@@ -198,5 +253,27 @@ export default {
   max-width: 450px;
   right:0;
   margin:0 auto;
+}
+._tags {
+  padding: 16px;
+  span {
+    margin-right: 5px;
+  }
+}
+.addinput._input {
+  border: 0;
+  background-color: #f7f8fa;
+  height: auto;
+  .van-field__control {
+    font-size: 14px;
+  }
+  .van-field__label span{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+.red {
+  color: red;
 }
 </style>
