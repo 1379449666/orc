@@ -12,7 +12,7 @@
     </van-row>
     <div class="_max_width">
       <van-row justify="space-between" type="flex" :style="{opacity:isEdit?0:1}" class="_text_length">
-      <van-col class="text_right" @click="showList=true;filter_edit({act: 1})">违规关键字编辑</van-col>
+      <van-col class="color_red" @click="showList=true;filter_edit({act: 1})">违规关键字编辑</van-col>
       <van-col class="text_right">已输入{{message.length}}/80 个字</van-col>
       </van-row>
       <van-field
@@ -226,7 +226,7 @@ export default {
     }
   }
 }
-.color_red{
+.color_red, .red{
   color: #C80000;
 }
 .result {
@@ -258,6 +258,7 @@ export default {
   padding: 16px;
   span {
     margin-right: 5px;
+    margin-bottom: 5px;
   }
 }
 .addinput._input {
@@ -272,8 +273,5 @@ export default {
     top: 50%;
     transform: translateY(-50%);
   }
-}
-.red {
-  color: red;
 }
 </style>
