@@ -1,3 +1,4 @@
+
 /**
  * 基础路由
  * @type { *[] }
@@ -8,7 +9,7 @@ export const constantRouterMap = [
     component: () => import('@/views/distinguish/index'),
     redirect: '/distinguish',
     meta: {
-      title: '广告文案违规内容识别',
+      title: '广告文案违规内容识别Beta1.0',
       keepAlive: false
     },
     children: [
@@ -16,7 +17,7 @@ export const constantRouterMap = [
         path: '/distinguish',
         name: 'Distinguish',
         component: () => import('@/views/distinguish/index'),
-        meta: { title: '广告文案违规内容识别', keepAlive: true }
+        meta: { title: '广告文案违规内容识别Beta1.0', keepAlive: true }
       }
     ]
   }

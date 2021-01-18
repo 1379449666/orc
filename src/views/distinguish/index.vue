@@ -4,6 +4,8 @@
     <van-row  justify="center" type="flex" align="center" class="_top_text" v-if="!isEdit">
       <van-col>请在下面文本框内填入文案</van-col>
       <van-col>填入完毕后请点击提交审核</van-col>
+      <van-col @click="linkDownload('https://e.qq.com/ads/helpcenter/detail?cid=508&pid=2023')">更多素材审核功能推荐使用</van-col>
+      <van-col  class="text_external_link" @click="linkDownload('https://e.qq.com/ads/helpcenter/detail?cid=508&pid=2023')">腾讯广告平台内置预审工具</van-col>
     </van-row>
     <van-row  justify="center" type="flex" align="center" class="_top_text" v-else>
       <van-col><span class="color_red">红色字体</span>高亮的是违规内容</van-col>
@@ -37,15 +39,6 @@
         <van-col><van-button color="#4BAF00" @click="sub">{{!isEdit ? '提交' : '修改'}}</van-button></van-col>
       </van-row>
     </div>
-    <!-- <van-popup
-      v-model="showList"
-      round
-      closeable
-      position="bottom"
-      class="_popup"
-    >
-      dajkdajk
-    </van-popup> -->
     <van-action-sheet v-model="showList" title="违规关键字" class="_popup">
       <div v-if="isAdd">
         <van-contact-card type="add" @click="onAdd" add-text="添加违规关键字"/>
@@ -68,6 +61,8 @@
         </template>
       </van-field>
     </van-action-sheet>
+    <div class="text_right prompt">当前词库包含 {{tagArray.length}} 个敏感词</div>
+    <van-image width="25%" fit="scale-down" :src="require('../../assets/image/WechatIMG50.png')"/>
   </div>
 </template>
 
@@ -96,6 +91,7 @@ export default {
     ...mapGetters(['userName'])
   },
   mounted() {
+    this.filter_edit({ act: 1 })
   },
   methods: {
     // 请求数据案例
@@ -178,6 +174,9 @@ export default {
         keywords: this.keywords
       }
       this.filter_edit(params)
+    },
+    linkDownload(url) {
+      window.open(url, '_blank')
     }
   }
 }
@@ -187,7 +186,7 @@ export default {
   padding: 0 15px;
   height: 100%;
   background-color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   .text_right{
     text-align: right;
     color: #8B8B8B;
@@ -209,7 +208,7 @@ export default {
     border-radius: 2px;
     .van-field__control{
       color: #646464;
-      font-size: 18px;
+      font-size: 16px;
     }
     .van-field__word-limit{
       display: none;
@@ -221,7 +220,7 @@ export default {
     height: 40px;
     .van-button{
       height: 100%;
-      font-size: 18px;
+      font-size: 16px;
       width: 105px;
     }
   }
@@ -236,7 +235,7 @@ export default {
   margin: 15px 0;
   padding: 10px 16px;
   color: #646464;
-  font-size: 18px;
+  font-size: 16px;
 }
 ._text_length {
   max-width: 450px;
@@ -273,5 +272,21 @@ export default {
     top: 50%;
     transform: translateY(-50%);
   }
+}
+.van-image {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.prompt.text_right {
+  color: #C2C2C2;
+  max-width: 450px;
+  margin:0 auto;
+  margin-top: 15px;
+}
+.text_external_link.van-col {
+  color: rgb(52, 120, 246)!important;
+  text-decoration: underline;
 }
 </style>
