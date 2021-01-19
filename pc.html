@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- import CSS -->
+  <link rel="stylesheet" href="./cdn/element-ui.css">
+</head>
+<body>
+  <div id="app">
+    <el-dropdown slot="tip" >
+      <el-button type="primary">下载<i class="el-icon-arrow-down el-icon--right"></i>
+      </el-button>
+      <el-dropdown-menu slot="dropdown" v-if="files.length > 0">
+          <a :href="item" v-for="(item, index) in files" :key="index"><el-dropdown-item >{{item}}</el-dropdown-item></a>
+      </el-dropdown-menu>
+      <el-dropdown-menu slot="dropdown" v-else>
+        <el-dropdown-item >暂无数据</el-dropdown-item>
+      </el-dropdown-menu>
+    </el-dropdown>
+    <el-upload
+      class="upload-demo"
+      drag
+      accept=".xls, .xlsx"
+      :show-file-list="false"
+      :on-change="handleChange"
+      :auto-upload="false"
+      action=""
+      >
+      <i class="el-icon-upload"></i>
+      <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+      <el-button type="primary" slot="tip" :disabled="list.length==0" @click="onUpload">{{list.length > 0 ? list[0].name : ''}}上传</el-button>
+      <el-button slot="tip" type="primary" @click="add" class="_add_button">添加单个违规关键字</el-button>
+    </el-upload>
+    <!-- </el-tooltip> -->
+    <el-table :data="tableData" height="calc(100% - 125px - 87px)" border style="width: 100%">
+      <el-table-column prop="date" type="index" label="序号" align="center" width="180"></el-table-column>
+      <el-table-column prop="name" label="违规关键字" align="center">
+        <template slot-scope="scope">
+          <span>{{scope.row}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="name" label="操作" align="center">
+        <template slot-scope="scope">
+          <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page.sync="currentPage"
+      :page-sizes="[10, 50, 100, 200]"
+      :page-size="PageSize"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="count">
+    </el-pagination>
+  </div>
+</body>
+<!-- import Vue before Element -->
+<script src="./cdn/vue.js"></script>
+<!-- import JavaScript -->
+<script src="./cdn/element-ui.js"></script>
+<script src="./cdn/qs.min.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: function() {
+      return { 
+        visible: false,
+        fileList: [],
+        list: [],
+        count: 1,
+        currentPage: 1,
+        PageSize: 10,
+        files: [],
+        tableData: [],
+        filesData: '',
+        act : 1, // type  1.查看列表；2.新增；3.删除
+        keywords: '', //  关键词
+        offset: 0, // 分页起始位置（第一次时为0，分页使用）
+        limit: 10 // 每次获取条数（默认为20）
+      }
+    },
+    mounted() {
+      this.getData()
+      this.getuploadData()
+    },
+    methods: {
+      add(index) { // 添加单个违规关键字
+        this.$prompt('请输入违规关键字', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputValidator(value){
+            if (value == undefined) return '关键字不能为空'
+          }
+        }).then(({ value }) => {
+          this.act = 2;
+          this.keywords = value;
+          this.offset = 0;
+          this.currentPage = 1;
+          this.getData();
+        }).catch(() => {});
+      },
+      getuploadData () { //获取近7天数据
+        axios.post('https://www.zppinc.com/filter/filter_file.php').then(res => {
+            this.files = res.data.result.files
+        })
+      },
+      handleDelete (index, row) { //删除单个关键字
+        this.$confirm(`删除关键字-${row}, 是否继续?`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.act = 3;
+          this.keywords = row;
+          this.getData()
+        }).catch(() => {});
+      },
+      handleChange (file, fileList) { // 上传文件
+        this.list.length = 0
+        this.list.push(file)
+      },
+      onUpload () { // 点击上传到服务器
+        var qs = Qs 
+        let form = new FormData();
+        form.append('file', this.list[0].raw);
+        form.append('offset', 0);
+        form.append('limit', this.limit);
+        axios.post('https://www.zppinc.com/filter/upload.php', form)
+          .then(res => {
+            this.tableData = res.data.result.list
+            this.count = res.data.result.count
+            this.currentPage = 1;
+            this.list.length = 0
+            this.$message({ type: 'success', message: '上传成功！' });
+        })
+      },
+      handleSizeChange(num) { // 选择每页多少条
+        this.offset = 0;
+        this.limit = num;
+        this.act = 1;
+        this.getData()
+      },
+      handleCurrentChange(num) { // 选择页码
+        this.offset = this.limit * (num - 1);
+        this.act = 1;
+        this.getData()
+      },
+      getData () {
+        let params = {
+          act : this.act, // type  1.查看列表；2.新增；3.删除
+          keywords: this.keywords, //  关键词
+          offset: this.offset, // 分页起始位置（第一次时为0，分页使用）
+          limit: this.limit // 每次获取条数（默认为20）
+        }
+        var qs = Qs
+        axios.post('https://www.zppinc.com/filter/filter_edit.php', qs.stringify(params)).then(res => {
+          if (res.data.code != 200) return this.$message({ type: 'error', message: '操作失败！' });
+          this.tableData = res.data.result.list
+          this.count = res.data.result.count
+          if (this.act === 1) return false;
+          this.$message({ type: 'success', message: '操作成功！' });
+        })
+      },
+      handleCommand(e) {
+        
+      }
+    }
+  })
+</script>
+<style>
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+html, body, #app {
+  height: 100%;
+}
+#app {
+  padding: 20px;
+}
+.el-upload-dragger {
+  height: 100px;
+  width: 236px;
+}
+.el-upload-dragger .el-icon-upload {
+  margin-top: 5px;
+}
+.upload-demo {
+  padding-left: 200px;
+  width: 30%;
+  position: relative;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+.upload-demo button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 465px;
+}
+.el-pagination {
+  text-align: end;
+  margin: 20px 0 10px;
+  padding-right: 20px
+}
+.upload-demo ._add_button {
+  left: 0;
+}
+.el-dropdown {
+  position: absolute;
+  top: 53px;
+  right: 100px;
+}
+a {
+  text-decoration: none;
+}
+</style>
+</html>

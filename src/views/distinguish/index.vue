@@ -14,7 +14,7 @@
     </van-row>
     <div class="_max_width">
       <van-row justify="space-between" type="flex" :style="{opacity:isEdit?0:1}" class="_text_length">
-      <van-col class="color_red" @click="showList=true;filter_edit({act: 1})">违规关键字编辑</van-col>
+      <van-col class="color_red" @click="showList=true;">违规关键字编辑</van-col>
       <van-col class="text_right">已输入{{message.length}}/80 个字</van-col>
       </van-row>
       <van-field
@@ -42,7 +42,15 @@
     <van-action-sheet v-model="showList" title="违规关键字" class="_popup">
       <div v-if="isAdd">
         <van-contact-card type="add" @click="onAdd" add-text="添加违规关键字"/>
-        <div class="_tags"><van-tag v-for="(item, index) in tagArray" :key="index" size="large" type="primary" @close="close(item)" closeable>{{item}}</van-tag></div>
+        <van-list
+          v-model="loading"
+          :finished="finished"
+          finished-text="没有更多了"
+          @load="onLoad"
+        >
+          <div class="_tags"><van-tag v-for="(item, index) in tagArray" :key="index" size="large" type="primary" @close="close(item, index)" closeable>{{item}}</van-tag></div>
+          <!-- <van-cell v-for="item in list" :key="item" :title="item" /> -->
+        </van-list>
       </div>
       <van-field
         class="_input addinput"
@@ -84,16 +92,27 @@ export default {
       arrays: [],
       tagArray: [],
       show: true,
-      isAdd: true
+      isAdd: true,
+      loading: false,
+      finished: false,
+      limit: 30,
+      act: 1,
+      text_keywords: '',
+      offset: 0
     }
   },
   computed: {
     ...mapGetters(['userName'])
   },
   mounted() {
-    this.filter_edit({ act: 1 })
+    this.getConut()
   },
   methods: {
+    getConut() {
+      this.act = 1
+      this.offset = 0
+      this.filter_edit()
+    },
     // 请求数据案例
     initData() { // 请求接口数据，仅作为展示，需要配置src->config下环境文件
       filter({ text: this.message })
@@ -122,6 +141,7 @@ export default {
     copyCodeError() { // 复制失败
       this.$toast('复制失败')
     },
+
     readText(evt) { // 读取剪切板内容
       navigator.clipboard.readText()
         .then(clipText => {
@@ -133,7 +153,8 @@ export default {
           this.$toast('读取剪切板内容失败')
         })
     },
-    sub() { // 提交
+
+    sub() { // 提交查询
       if (this.message.length === 0) return this.$toast('请输入广告文案')
       this.isEdit = !this.isEdit
       if (this.isEdit) {
@@ -144,39 +165,68 @@ export default {
         }, 0)
       }
     },
+
     onAdd() { // 显示添加关键字
       this.isAdd = false
       setTimeout(() => {
         this.$refs.keywords.focus()
       }, 0)
     },
-    close(keywords) { // 点击关闭tag标签
+
+    close(keywords, index) { // 点击关闭tag标签
       Dialog.confirm({
         title: '确认删除'
       })
-        .then(() => { this.filter_edit({ act: 3, keywords }) })
+        .then(() => {
+          console.log(keywords, index)
+          this.tagArray.splice(index, 1)
+          this.act = 3
+          this.text_keywords = keywords
+          this.offset -= 1
+          this.filter_edit()
+        })
         .catch()
     },
-    filter_edit(params) {
+
+    filter_edit() {
+      var params = {
+        act: this.act, // 1.查看列表；2.新增；3.删除
+        keywords: this.text_keywords, // 关键词
+        offset: this.offset, // 分页起始位置
+        limit: this.limit // 每次获取条数
+      }
       filter_edit(params).then(res => {
-        if (params.act === 2) {
-          this.isAdd = !this.isAdd
+        this.loading = false
+        if (params.act === 3) {
+          return false
+        } else if (params.act === 2) {
+          this.isAdd = true
           this.keywords = ''
         }
-        this.tagArray = []
-        this.tagArray = res.result.list
+        // eslint-disable-next-line no-return-assign
+        if (res.result.list.length === 0) return this.finished = true
+        if (this.offset === 0) {
+          this.tagArray.length = 0
+          this.tagArray = res.result.list
+        } else {
+          this.tagArray = [...this.tagArray, ...res.result.list]
+        }
+        this.offset = res.result.offset
       })
     },
     Addtag() { // 添加关键字
       if (this.keywords === '') return this.$toast('请输入违规关键字')
-      var params = {
-        act: 2,
-        keywords: this.keywords
-      }
-      this.filter_edit(params)
+      this.act = 2
+      this.offset = 0
+      this.text_keywords = this.keywords
+      this.filter_edit()
     },
     linkDownload(url) {
       window.open(url, '_blank')
+    },
+    onLoad() {
+      this.act = 1
+      this.filter_edit()
     }
   }
 }
