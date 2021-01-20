@@ -71,7 +71,7 @@
         </template>
       </van-field>
     </van-action-sheet>
-    <div class="text_right prompt">当前词库包含 {{tagArray.length}} 个敏感词</div>
+    <div class="text_right prompt">当前词库包含 {{count}} 个敏感词</div>
     <van-image width="25%" :style="{opacity: isFocus ? 0 : 1}" fit="scale-down" :src="require('../../assets/image/WechatIMG50.png')"/>
   </div>
 </template>
@@ -101,7 +101,8 @@ export default {
       limit: 30,
       act: 1,
       text_keywords: '',
-      offset: 0
+      offset: 0,
+      count: 0
     }
   },
   computed: {
@@ -126,7 +127,6 @@ export default {
     initData() { // 请求接口数据，仅作为展示，需要配置src->config下环境文件
       filter({ text: this.message })
         .then(res => {
-          this.arrays.length = 0
           this.arrays = res.result.text
         })
         .catch(() => { })
@@ -168,6 +168,7 @@ export default {
       this.isEdit = !this.isEdit
       if (this.isEdit) {
         this.initData()
+        this.arrays.length = 0
       } else {
         setTimeout(() => {
           this.$refs.field.focus()
@@ -221,6 +222,7 @@ export default {
           this.tagArray = [...this.tagArray, ...res.result.list]
         }
         this.offset = res.result.offset
+        this.count = res.result.count
       })
     },
     Addtag() { // 添加关键字
