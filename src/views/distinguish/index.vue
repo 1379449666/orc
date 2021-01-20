@@ -25,6 +25,8 @@
         type="textarea"
         placeholder="请输入广告文案"
         show-word-limit
+        @focus="onfocus"
+        @blur="onblur"
         maxlength="80"
         ref="field"
         v-if="!isEdit"
@@ -70,7 +72,7 @@
       </van-field>
     </van-action-sheet>
     <div class="text_right prompt">当前词库包含 {{tagArray.length}} 个敏感词</div>
-    <van-image width="25%" fit="scale-down" :src="require('../../assets/image/WechatIMG50.png')"/>
+    <van-image width="25%" :style="{opacity: isFocus ? 0 : 1}" fit="scale-down" :src="require('../../assets/image/WechatIMG50.png')"/>
   </div>
 </template>
 
@@ -95,6 +97,7 @@ export default {
       isAdd: true,
       loading: false,
       finished: false,
+      isFocus: false,
       limit: 30,
       act: 1,
       text_keywords: '',
@@ -108,6 +111,12 @@ export default {
     this.getConut()
   },
   methods: {
+    onfocus() {
+      this.isFocus = true
+    },
+    onblur() {
+      this.isFocus = false
+    },
     getConut() {
       this.act = 1
       this.offset = 0
