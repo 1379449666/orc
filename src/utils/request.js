@@ -1,3 +1,4 @@
+
 import axios from 'axios'
 import store from '@/store'
 import { Toast } from 'vant'
@@ -8,7 +9,7 @@ const service = axios.create({
   baseURL: baseApi, // url = base api url + request url
   // 'content-type': 'application/x-www-form-urlencoded',
   // withCredentials: true, // send cookies when cross-domain requests
-  timeout: 5000 // request timeout
+  timeout: 50000 // request timeout
 })
 
 // request拦截器 request interceptor

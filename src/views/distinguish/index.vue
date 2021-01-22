@@ -81,7 +81,7 @@
 // eslint-disable-next-line no-unused-vars
 import { filter, filter_edit } from '@/api/home.js'
 import { mapGetters } from 'vuex'
-import { Dialog } from 'vant'
+import { Dialog, Toast } from 'vant'
 // eslint-disable-next-line no-unused-vars
 import { setClipboardData, getClipboardData } from 'uni-clipboard'
 export default {
@@ -125,6 +125,7 @@ export default {
     },
     // 请求数据案例
     initData() { // 请求接口数据，仅作为展示，需要配置src->config下环境文件
+      Toast.loading({ message: '查询中...', forbidClick: true, duration: 0 })
       filter({ text: this.message })
         .then(res => {
           this.arrays = res.result.text
